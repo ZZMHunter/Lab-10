@@ -34,68 +34,76 @@ public:
     int h;
     int m;
 };
+
 class Movie { 
 public: 
     std::string title;
-    Genre genre;     // only one genre per movie
-    int duration;    // in minutes
+    Genre genre;
+    int duration; // minutes
 };
 
 class TimeSlot { 
 public: 
-    Movie movie;     // what movie
-    Time startTime;  // when it starts
+    Movie movie;
+    Time startTime;
 };
+
+// A)
 int minutesSinceMidnight(Time time){
-    return time.h*60 + time.m;
+    return time.h * 60 + time.m;
 }
+
 int minutesUntil(Time earlier, Time later){
-    if (later.m < earlier.m){
-        return {(later.h-earlier.h-1)*60+((earlier.m+60)-later.m)};
-    }
+    return minutesSinceMidnight(later) - minutesSinceMidnight(earlier);
 }
+
+// B)
 Time addMinutes(Time time0, int min){
-    Time x = time0;
-    if(x.m + min >= 60){
-        x.h += (x.m+min)/60;
-        x.m = (x.m+min)%60;
-    }
-    return x;
+    Time t;
+    int total = minutesSinceMidnight(time0) + min;
+    t.h = total / 60;
+    t.m = total % 60;
+    return t;
 }
+
 void printMovie(Movie mv){
     std::string g;
     switch (mv.genre) {
         case ACTION   : g = "ACTION"; break;
         case COMEDY   : g = "COMEDY"; break;
-        case DRAMA    : g = "DRAMA";  break;
+        case DRAMA    : g = "DRAMA"; break;
         case ROMANCE  : g = "ROMANCE"; break;
         case THRILLER : g = "THRILLER"; break;
     }
     std::cout << mv.title << " " << g << " (" << mv.duration << " min)";
 }
+
+// C)
 void printTimeSlot(TimeSlot ts){
+    Time end = addMinutes(ts.startTime, ts.movie.duration);
+
     printMovie(ts.movie);
-    std::cout << " [starts at " << ts.startTime.h << ":"<<ts.startTime.m << ", ends by " <<
-                 addMinutes(ts.startTime,ts.movie.duration).h << ":"  <<
-                 addMinutes(ts.startTime,ts.movie.duration).m << "]" << std::endl; 
+    std::cout << " [starts at " 
+              << ts.startTime.h << ":" << ts.startTime.m
+              << ", ends by "
+              << end.h << ":" << end.m << "]\n";
 }
+
+// D)
 TimeSlot scheduleAfter(TimeSlot ts, Movie nextMovie){
-    TimeSlot newTs = {nextMovie, Time() = {addMinutes(ts.startTime, ts.movie.duration).h,addMinutes(ts.startTime, ts.movie.duration).m}};
+    Time endTime = addMinutes(ts.startTime, ts.movie.duration);
+    TimeSlot newTs = { nextMovie, endTime };
     return newTs;
 }
+
+// E)
 bool timeOverlap(TimeSlot ts1, TimeSlot ts2){
-    if (ts1.startTime.h < ts2.startTime.h){
-        if (addMinutes(ts1.startTime, ts1.movie.duration).h > ts2.startTime.h){
-            return false;
-        }else if (addMinutes(ts1.startTime, ts1.movie.duration).h <= ts2.startTime.h){
-            return true;
-        }
-    }else if (ts1.startTime.h > ts2.startTime.h){
-        if (addMinutes(ts2.startTime, ts2.movie.duration).h > ts1.startTime.h){
-            return false;
-        }else if (addMinutes(ts2.startTime, ts2.movie.duration).h <= ts1.startTime.h){
-            return true;
-        }
-    }
-    return false;
+    int start1 = minutesSinceMidnight(ts1.startTime);
+    int end1 = start1 + ts1.movie.duration;
+
+    int start2 = minutesSinceMidnight(ts2.startTime);
+    int end2 = start2 + ts2.movie.duration;
+
+    // Overlap occurs if both intervals intersect
+    return !(end1 <= start2 || end2 <= start1);
 }
